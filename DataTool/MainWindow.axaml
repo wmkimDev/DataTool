@@ -1,0 +1,117 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="DataTool.MainWindow"
+        Title="데이터 도구"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="#FF1E1E1E"
+        Width="850"   
+        Height="900"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen">
+    
+    <StackPanel Margin="10">
+        <!-- Folder Selector Section -->
+        <StackPanel Margin="10">
+            <!-- First Folder Selector -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="110"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="테이블 경로" VerticalAlignment="Center" Foreground="White" Grid.Column="0"/>
+                <TextBox Name="TablePathTextBox" Height="30" Margin="5,0" Watermark="폴더 1 선택" Grid.Column="1"/>
+                <Button Click="OnClickSearchTablePath" Width="100" Height="30" Content="찾아보기" HorizontalContentAlignment="Center" Grid.Column="2"/>
+            </Grid>
+
+            <!-- Second Folder Selector -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="110"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="스크립트 경로" VerticalAlignment="Center" Foreground="White" Grid.Column="0"/>
+                <TextBox Name="ScriptPathTextBox" Height="30" Margin="5,0" Watermark="폴더 2 선택" Grid.Column="1"/>
+                <Button Click="OnClickSearchScriptPath" Width="100" Height="30" Content="찾아보기" HorizontalContentAlignment="Center" Grid.Column="2"/>
+            </Grid>
+
+            <!-- Third Folder Selector -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="110"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="테이블 데이터 출력 경로" VerticalAlignment="Center" Foreground="White" Grid.Column="0"/>
+                <TextBox Name="TableOutputPathTextBox" Height="30" Margin="5,0" Watermark="폴더 3 선택" Grid.Column="1"/>
+                <Button Click="OnClickSearchTableOutputPath" Width="100" Height="30" Content="찾아보기" HorizontalContentAlignment="Center" Grid.Column="2"/>
+            </Grid>
+
+            <!-- Fourth Folder Selector -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="110"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="문자열 데이터 출력 경로" VerticalAlignment="Center" Foreground="White" Grid.Column="0"/>
+                <TextBox Name="StringOutputPathTextBox" Height="30" Margin="5,0" Watermark="폴더 4 선택" Grid.Column="1"/>
+                <Button Click="OnClickSearchStringOutputPath" Width="100" Height="30" Content="찾아보기" HorizontalContentAlignment="Center" Grid.Column="2"/>
+            </Grid>
+
+            <!-- String Table File Name -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="문자열 테이블 파일 이름" VerticalAlignment="Center" Foreground="White" Grid.Column="0"/>
+                <TextBox Name="StringTableFileNameTextBox" Height="30" Watermark="값 입력" Grid.Column="1"/>
+            </Grid>
+
+            <!-- Enum Definition File Name -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="170"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <CheckBox Name="EnableEnumDefinitionFileName" VerticalAlignment="Center" IsChecked="True" Grid.Column="0"/>
+                <Label Content="열거형 정의 파일 이름" VerticalAlignment="Center" Foreground="White" Grid.Column="1"/>
+                <TextBox Name="EnumDefinitionFileNameTextBox" Height="30" Watermark="값 입력" IsEnabled="{Binding ElementName=EnableEnumDefinitionFileName, Path=IsChecked}" Grid.Column="2"/>
+            </Grid>
+
+            <!-- Encryption Key -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="170"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <CheckBox Name="EnableEncryptionKey" VerticalAlignment="Center" IsChecked="True" Grid.Column="0"/>
+                <Label Content="암호화 키" VerticalAlignment="Center" Foreground="White" Grid.Column="1"/>
+                <TextBox Name="EncryptionKeyTextBox" Height="30" Watermark="값 입력" IsEnabled="{Binding ElementName=EnableEncryptionKey, Path=IsChecked}" Grid.Column="2"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- Action Buttons -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10">
+            <Button Width="150" Height="50" Margin="5" Content="설정 저장" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+            <Button Width="150" Height="50" Margin="5" Content="전부 수행" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+            <Button Width="150" Height="50" Margin="5" Content= "스크립트 추출" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+            <Button Width="150" Height="50" Margin="5" Content="테이블 추출" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+            <Button Width="150" Height="50" Margin="5" Content="스트링 추출" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+        </StackPanel>
+
+        <!-- Output Area -->
+        <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="3" Margin="10">
+            <ScrollViewer Height="450" VerticalScrollBarVisibility="Visible">
+                <TextBox Name="OutputText" Background="Transparent" Foreground="White" FontFamily="Consolas" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" Padding="10" />
+            </ScrollViewer>
+        </Border>
+    </StackPanel>
+</Window>
