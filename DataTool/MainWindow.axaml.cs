@@ -1,155 +1,153 @@
 using System;
-using System.IO;
-using System.Text.Json;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
-using Avalonia.Platform.Storage;
 
 namespace DataTool
 {
-    public class Settings
+    public enum OutputType
     {
-        public string? TablePath { get; set; }
-        public string? ScriptPath { get; set; }
-        public string? TableOutputPath { get; set; }
-        public string? StringOutputPath { get; set; }
-        public string? StringTableFileName { get; set; }
-        public bool EnableEnumDefinition { get; set; }
-        public string? EnumDefinitionFileName { get; set; }
-        public bool EnableEncryption { get; set; }
-        public string? EncryptionKey { get; set; }
+        Normal,
+        Error,
+        Warning,
+        Success,
+        Info
     }
-    
+
     public partial class MainWindow : Window
     {
-        private const string SettingsFileName = "settings.json";
-        private Settings _settings = new Settings();
-        
+        private readonly Settings         _settings = new();
+        private readonly SettingsManager  _settingsManager;
+        private readonly UIControlManager _controlManager;
+        private readonly FileDialogHelper _fileDialogHelper;
+
         public MainWindow()
         {
             InitializeComponent();
-            LoadSettings();
-        }
-        
-        private void LoadSettings()
-        {
-            try
-            {
-                if (File.Exists(SettingsFileName))
-                {
-                    var json = File.ReadAllText(SettingsFileName);
-                    _settings = JsonSerializer.Deserialize<Settings>(json) ?? new Settings();
 
-                    // UI에 설정값 적용
-                    this.FindControl<TextBox>("TablePathTextBox")!.Text = _settings.TablePath;
-                    this.FindControl<TextBox>("ScriptPathTextBox")!.Text = _settings.ScriptPath;
-                    this.FindControl<TextBox>("TableOutputPathTextBox")!.Text = _settings.TableOutputPath;
-                    this.FindControl<TextBox>("StringOutputPathTextBox")!.Text = _settings.StringOutputPath;
-                    this.FindControl<TextBox>("StringTableFileNameTextBox")!.Text = _settings.StringTableFileName;
-                    this.FindControl<CheckBox>("EnableEnumDefinitionFileName")!.IsChecked = _settings.EnableEnumDefinition;
-                    this.FindControl<TextBox>("EnumDefinitionFileNameTextBox")!.Text = _settings.EnumDefinitionFileName;
-                    this.FindControl<CheckBox>("EnableEncryptionKey")!.IsChecked = _settings.EnableEncryption;
-                    this.FindControl<TextBox>("EncryptionKeyTextBox")!.Text = _settings.EncryptionKey;
+            _settingsManager  = new SettingsManager((msg, type) => AppendToOutput(msg, type));
+            _controlManager   = new UIControlManager(this);
+            _fileDialogHelper = new FileDialogHelper(this);
 
-                    AppendToOutput("설정을 성공적으로 불러왔습니다.");
-                }
-            }
-            catch (Exception ex)
-            {
-                AppendToOutput($"설정을 불러오는 중 오류가 발생했습니다: {ex.Message}");
-            }
+            var settings = _settingsManager.LoadSettings();
+            _controlManager.ApplySettings(settings);
         }
-        
+
         public void OnClickSaveSettings(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                _settings.TablePath = this.FindControl<TextBox>("TablePathTextBox")!.Text;
-                _settings.ScriptPath = this.FindControl<TextBox>("ScriptPathTextBox")!.Text;
-                _settings.TableOutputPath = this.FindControl<TextBox>("TableOutputPathTextBox")!.Text;
-                _settings.StringOutputPath = this.FindControl<TextBox>("StringOutputPathTextBox")!.Text;
-                _settings.StringTableFileName = this.FindControl<TextBox>("StringTableFileNameTextBox")!.Text;
-                _settings.EnableEnumDefinition = this.FindControl<CheckBox>("EnableEnumDefinitionFileName")!.IsChecked ?? false;
-                _settings.EnumDefinitionFileName = this.FindControl<TextBox>("EnumDefinitionFileNameTextBox")!.Text;
-                _settings.EnableEncryption = this.FindControl<CheckBox>("EnableEncryptionKey")!.IsChecked ?? false;
-                _settings.EncryptionKey = this.FindControl<TextBox>("EncryptionKeyTextBox")!.Text;
-
-                var json = JsonSerializer.Serialize(_settings, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(SettingsFileName, json);
-
-                AppendToOutput("설정이 성공적으로 저장되었습니다.");
-            }
-            catch (Exception ex)
-            {
-                AppendToOutput($"설정을 저장하는 중 오류가 발생했습니다: {ex.Message}");
-            }
+            var settings = _controlManager.GetCurrentSettings();
+            _settingsManager.SaveSettings(settings);
         }
-        
-        private void AppendToOutput(string message)
+
+        public async void OnClickSearchTablePath(object sender, RoutedEventArgs e) =>
+            await _fileDialogHelper.ShowFolderDialog("TablePathTextBox");
+
+        public async void OnClickSearchScriptPath(object sender, RoutedEventArgs e) =>
+            await _fileDialogHelper.ShowFolderDialog("ScriptPathTextBox");
+
+        public async void OnClickSearchTableOutputPath(object sender, RoutedEventArgs e) =>
+            await _fileDialogHelper.ShowFolderDialog("TableOutputPathTextBox");
+
+        public async void OnClickSearchStringOutputPath(object sender, RoutedEventArgs e) =>
+            await _fileDialogHelper.ShowFolderDialog("StringOutputPathTextBox");
+
+        private ValidationBuilder CreateBaseValidationBuilder()
+        {
+            return new ValidationBuilder(_controlManager.TextBoxes, _controlManager.CheckBoxes);
+        }
+
+        public void OnClickExecuteAll(object sender, RoutedEventArgs e)
+        {
+            var result = CreateBaseValidationBuilder()
+                .ValidateAll()
+                .Build();
+
+            if (!result.IsValid)
+            {
+                AppendToOutput(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
+                return;
+            }
+
+            // Execute all logic here
+        }
+
+        public void OnClickExtractScript(object sender, RoutedEventArgs e)
+        {
+            var result = CreateBaseValidationBuilder()
+                .ValidateTable()
+                .ValidateScript()
+                .ValidateEnumDefinition()
+                .Build();
+
+            if (!result.IsValid)
+            {
+                AppendToOutput(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
+                return;
+            }
+
+            // Extract script logic here
+        }
+
+        public void OnClickExtractTable(object sender, RoutedEventArgs e)
+        {
+            var result = CreateBaseValidationBuilder()
+                .ValidateTable()
+                .ValidateTableOutput()
+                .ValidateEncryption()
+                .ValidateEnumDefinition()
+                .Build();
+
+            if (!result.IsValid)
+            {
+                AppendToOutput(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
+                return;
+            }
+
+            // Extract table logic here
+        }
+
+        public void OnClickExtractString(object sender, RoutedEventArgs e)
+        {
+            var result = CreateBaseValidationBuilder()
+                .ValidateTable()
+                .ValidateStringOutput()
+                .ValidateStringTableFileName()
+                .ValidateEncryption()
+                .Build();
+
+            if (!result.IsValid)
+            {
+                AppendToOutput(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
+                return;
+            }
+
+            // Extract string logic here
+        }
+
+        private void AppendToOutput(string message, OutputType type = OutputType.Normal)
         {
             Dispatcher.UIThread.Post(() =>
             {
-                var outputText = this.FindControl<TextBox>("OutputText")!;
-                outputText.Text       += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n";
-                outputText.CaretIndex =  outputText.Text.Length;
+                var outputText = this.FindControl<TextBlock>("OutputText")!;
+                var timestamp  = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] ";
+
+                var textRun = new Run
+                {
+                    Text = $"{timestamp}{message}\n",
+                    Foreground = type switch
+                    {
+                        OutputType.Error   => Brushes.Red,
+                        _                  => new SolidColorBrush(Color.Parse("#FFE6E6E6"))
+                    }
+                };
+
+                outputText.Inlines?.Add(textRun);
+                var scrollViewer = this.FindControl<ScrollViewer>("OutputScroller")!;
+                scrollViewer.Offset = new Vector(0, scrollViewer.Extent.Height);
             });
-        }
-
-        public async void OnClickSearchTablePath(object sender, RoutedEventArgs e)
-        {
-            var result = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions());
-
-            if (result?.Count > 0)
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    this.FindControl<TextBox>("TablePathTextBox")!.Text = result[0].Path.LocalPath;
-                });
-            }
-        }
-
-        public async void OnClickSearchScriptPath(object sender, RoutedEventArgs e)
-        {
-            var result = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions());
-
-            if (result?.Count > 0)
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    this.FindControl<TextBox>("ScriptPathTextBox")!.Text = result[0].Path.LocalPath;
-                });
-            }
-        }
-
-        public async void OnClickSearchTableOutputPath(object sender, RoutedEventArgs e)
-        {
-            var result = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-            {
-            });
-
-            if (result?.Count > 0)
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    this.FindControl<TextBox>("TableOutputPathTextBox")!.Text = result[0].Path.LocalPath;
-                });
-            }
-        }
-        
-        public async void OnClickSearchStringOutputPath(object sender, RoutedEventArgs e)
-        {
-            var result = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-            {
-            });
-
-            if (result?.Count > 0)
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    this.FindControl<TextBox>("StringOutputPathTextBox")!.Text = result[0].Path.LocalPath;
-                });
-            }
         }
     }
 }

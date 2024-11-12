@@ -1,11 +1,11 @@
 {
-  "TablePath": "C:\\Users\\user\\Desktop\\Git\\Boid\\Library\\BurstCache\\JIT",
-  "ScriptPath": "qwqqwqwqwrq",
-  "TableOutputPath": "qw",
-  "StringOutputPath": "qwrqw",
-  "StringTableFileName": "qw",
-  "EnableEnumDefinition": false,
-  "EnumDefinitionFileName": "qwqqwr",
-  "EnableEncryption": false,
-  "EncryptionKey": "qwqw"
+  "TablePath": "",
+  "ScriptPath": "",
+  "TableOutputPath": "",
+  "StringOutputPath": "",
+  "StringTableFileName": "",
+  "EnableEnumDefinition": true,
+  "EnumDefinitionFileName": "",
+  "EnableEncryption": true,
+  "EncryptionKey": ""
 }
