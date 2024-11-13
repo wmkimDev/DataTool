@@ -6,14 +6,14 @@ namespace DataTool;
 
 public class ValidationBuilder
 {
-    private readonly Dictionary<string, TextBox>                                     _textBoxes;
-    private readonly Dictionary<string, CheckBox>                                    _checkBoxes;
-    private readonly List<(string Field, Func<bool> Validator, string ErrorMessage)> _validations = new();
+    private readonly UIControlManager _controls;
+    private readonly List<ValidationRule> _validations = new();
 
-    public ValidationBuilder(Dictionary<string, TextBox> textBoxes, Dictionary<string, CheckBox> checkBoxes)
+    private record ValidationRule(string Field, Func<bool> Validator, string ErrorMessage);
+
+    public ValidationBuilder(UIControlManager controls)
     {
-        _textBoxes  = textBoxes;
-        _checkBoxes = checkBoxes;
+        _controls = controls;
     }
 
     public ValidationBuilder ValidateAll()
@@ -27,63 +27,64 @@ public class ValidationBuilder
             .ValidateEnumDefinition();
     }
 
-    public ValidationBuilder ValidateTable()
+    private ValidationBuilder AddValidation(string field, Func<bool> validator, string errorMessage)
     {
-        _validations.Add(("테이블 경로",
-            () => !string.IsNullOrWhiteSpace(_textBoxes["TablePathTextBox"].Text),
-            "테이블 경로를 입력하세요."));
+        _validations.Add(new ValidationRule(field, validator, errorMessage));
         return this;
     }
 
-    public ValidationBuilder ValidateScript()
-    {
-        _validations.Add(("스크립트 경로",
-            () => !string.IsNullOrWhiteSpace(_textBoxes["ScriptPathTextBox"].Text),
-            "스크립트 경로를 입력하세요."));
-        return this;
-    }
+    private bool ValidateTextBox(TextBoxId id) => 
+        !string.IsNullOrWhiteSpace(_controls.GetTextBoxValue(id));
 
-    public ValidationBuilder ValidateTableOutput()
-    {
-        _validations.Add(("테이블 출력 경로",
-            () => !string.IsNullOrWhiteSpace(_textBoxes["TableOutputPathTextBox"].Text),
-            "테이블 출력 경로를 입력하세요."));
-        return this;
-    }
+    private bool ValidateConditionalTextBox(CheckBoxId checkBoxId, TextBoxId textBoxId) =>
+        !_controls.GetCheckBoxValue(checkBoxId)!.Value || 
+        !string.IsNullOrWhiteSpace(_controls.GetTextBoxValue(textBoxId));
 
-    public ValidationBuilder ValidateStringOutput()
-    {
-        _validations.Add(("문자열 출력 경로",
-            () => !string.IsNullOrWhiteSpace(_textBoxes["StringOutputPathTextBox"].Text),
-            "문자열 출력 경로를 입력하세요."));
-        return this;
-    }
+    public ValidationBuilder ValidateTable() =>
+        AddValidation(
+            "테이블 경로",
+            () => ValidateTextBox(TextBoxId.TablePath),
+            "테이블 경로를 입력하세요.");
 
-    public ValidationBuilder ValidateStringTableFileName()
-    {
-        _validations.Add(("문자열 테이블 파일명",
-            () => !string.IsNullOrWhiteSpace(_textBoxes["StringTableFileNameTextBox"].Text),
-            "문자열 테이블 파일명을 입력하세요."));
-        return this;
-    }
+    public ValidationBuilder ValidateScript() =>
+        AddValidation(
+            "스크립트 경로",
+            () => ValidateTextBox(TextBoxId.ScriptPath),
+            "스크립트 경로를 입력하세요.");
 
-    public ValidationBuilder ValidateEncryption()
-    {
-        _validations.Add(("암호화 키",
-            () => !_checkBoxes["EnableEncryptionKey"].IsChecked!.Value ||
-                  !string.IsNullOrWhiteSpace(_textBoxes["EncryptionKeyTextBox"].Text),
-            "암호화 키를 입력하세요."));
-        return this;
-    }
+    public ValidationBuilder ValidateTableOutput() =>
+        AddValidation(
+            "테이블 출력 경로",
+            () => ValidateTextBox(TextBoxId.TableOutputPath),
+            "테이블 출력 경로를 입력하세요.");
 
-    public ValidationBuilder ValidateEnumDefinition()
-    {
-        _validations.Add(("열거형 정의 파일명",
-            () => !_checkBoxes["EnableEnumDefinitionFileName"].IsChecked!.Value ||
-                  !string.IsNullOrWhiteSpace(_textBoxes["EnumDefinitionFileNameTextBox"].Text),
-            "열거형 정의 파일명을 입력하세요."));
-        return this;
-    }
+    public ValidationBuilder ValidateStringOutput() =>
+        AddValidation(
+            "문자열 출력 경로",
+            () => ValidateTextBox(TextBoxId.StringOutputPath),
+            "문자열 출력 경로를 입력하세요.");
+
+    public ValidationBuilder ValidateStringTableFileName() =>
+        AddValidation(
+            "문자열 테이블 파일명",
+            () => ValidateTextBox(TextBoxId.StringTableFileName),
+            "문자열 테이블 파일명을 입력하세요.");
+
+    public ValidationBuilder ValidateEncryption() =>
+        AddValidation(
+            "암호화 키",
+            () => ValidateConditionalTextBox(
+                CheckBoxId.EnableEncryptionKey,
+                TextBoxId.EncryptionKey),
+            "암호화 키를 입력하세요.");
+
+    public ValidationBuilder ValidateEnumDefinition() =>
+        AddValidation(
+            "열거형 정의 파일명",
+            () => ValidateConditionalTextBox(
+                CheckBoxId.EnableEnumDefinitionFileName,
+                TextBoxId.EnumDefinitionFileName),
+            "열거형 정의 파일명을 입력하세요.");
 
     public ValidationResult Build()
     {

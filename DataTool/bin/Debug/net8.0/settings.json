@@ -1,11 +1,11 @@
 {
-  "TablePath": "",
-  "ScriptPath": "",
-  "TableOutputPath": "",
-  "StringOutputPath": "",
-  "StringTableFileName": "",
-  "EnableEnumDefinition": true,
+  "TablePath": "C:\\Users\\user\\Desktop\\Git\\Project-YouTurn\\Data\\ExcelTable",
+  "ScriptPath": "qwe",
+  "TableOutputPath": "qweq",
+  "StringOutputPath": "qwe",
+  "StringTableFileName": "qwe",
+  "EnableEnumDefinition": false,
   "EnumDefinitionFileName": "",
-  "EnableEncryption": true,
+  "EnableEncryption": false,
   "EncryptionKey": ""
 }

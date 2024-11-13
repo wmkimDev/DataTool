@@ -167,7 +167,7 @@
                     Margin="0,0,0,15">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
                     <Button Classes="save" Width="150" Click="OnClickSaveSettings" Content="설정 저장"/>
-                    <Button Classes="execute" Width="150" Click="OnClickExecuteAll" Content="전부 수행"/>
+                    <Button Classes="execute" Width="150" Click="OnClickExecuteAll" Content="전부 추출"/>
                     <Button Classes="extract" Width="150" Click="OnClickExtractScript" Content="스크립트 추출"/>
                     <Button Classes="extract" Width="150" Click="OnClickExtractTable" Content="테이블 추출"/>
                     <Button Classes="extract" Width="150" Click="OnClickExtractString" Content="스트링 추출"/>

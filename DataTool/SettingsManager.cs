@@ -5,15 +5,15 @@ using DataTool;
 
 public class Settings
     {
-        public string? TablePath              { get; set; }
-        public string? ScriptPath             { get; set; }
-        public string? TableOutputPath        { get; set; }
-        public string? StringOutputPath       { get; set; }
-        public string? StringTableFileName    { get; set; }
-        public bool    EnableEnumDefinition   { get; set; }
-        public string? EnumDefinitionFileName { get; set; }
-        public bool    EnableEncryption       { get; set; }
-        public string? EncryptionKey          { get; set; }
+        public string? TablePath              { get; init; }
+        public string? ScriptPath             { get; init; }
+        public string? TableOutputPath        { get; init; }
+        public string? StringOutputPath       { get; init; }
+        public string? StringTableFileName    { get; init; }
+        public bool    EnableEnumDefinition   { get; init; }
+        public string? EnumDefinitionFileName { get; init; }
+        public bool    EnableEncryption       { get; init; }
+        public string? EncryptionKey          { get; init; }
     }
 
     public class SettingsManager
@@ -34,7 +34,7 @@ public class Settings
                 {
                     var json     = File.ReadAllText(SettingsFileName);
                     var settings = JsonSerializer.Deserialize<Settings>(json);
-                    _logger("설정을 성공적으로 불러왔습니다.", OutputType.Success);
+                    _logger("설정을 성공적으로 불러왔습니다.", OutputType.Info);
                     return settings ?? new Settings();
                 }
             }

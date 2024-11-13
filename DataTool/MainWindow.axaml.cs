@@ -19,21 +19,28 @@ namespace DataTool
 
     public partial class MainWindow : Window
     {
-        private readonly Settings         _settings = new();
-        private readonly SettingsManager  _settingsManager;
+        private readonly Settings _settings = new();
+        private readonly SettingsManager _settingsManager;
         private readonly UIControlManager _controlManager;
         private readonly FileDialogHelper _fileDialogHelper;
+        private readonly SheetContextCollector _sheetContextCollector;
+        private readonly OutputManager _outputManager;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            _settingsManager  = new SettingsManager((msg, type) => AppendToOutput(msg, type));
-            _controlManager   = new UIControlManager(this);
+            var outputText = this.FindControl<TextBlock>("OutputText")!;
+            var outputScroller = this.FindControl<ScrollViewer>("OutputScroller")!;
+            _outputManager = new OutputManager(outputText, outputScroller);
+
+            _settingsManager = new SettingsManager(_outputManager.AppendMessage);
+            _controlManager = new UIControlManager(this);
             _fileDialogHelper = new FileDialogHelper(this);
 
             var settings = _settingsManager.LoadSettings();
             _controlManager.ApplySettings(settings);
+            _sheetContextCollector = new SheetContextCollector(_controlManager, _outputManager);
         }
 
         public void OnClickSaveSettings(object sender, RoutedEventArgs e)
@@ -54,10 +61,7 @@ namespace DataTool
         public async void OnClickSearchStringOutputPath(object sender, RoutedEventArgs e) =>
             await _fileDialogHelper.ShowFolderDialog("StringOutputPathTextBox");
 
-        private ValidationBuilder CreateBaseValidationBuilder()
-        {
-            return new ValidationBuilder(_controlManager.TextBoxes, _controlManager.CheckBoxes);
-        }
+        private ValidationBuilder CreateBaseValidationBuilder() => new(_controlManager);
 
         public void OnClickExecuteAll(object sender, RoutedEventArgs e)
         {
@@ -67,11 +71,20 @@ namespace DataTool
 
             if (!result.IsValid)
             {
-                AppendToOutput(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
+                _outputManager.AppendMessage(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
                 return;
             }
 
-            // Execute all logic here
+            try
+            {
+                _outputManager.AppendMessage("전체 추출 작업을 시작합니다...", OutputType.Info);
+                _sheetContextCollector.CollectAll();
+                _outputManager.AppendMessage("전체 추출 작업이 완료되었습니다.", OutputType.Success);
+            }
+            catch (Exception exception)
+            {
+                _outputManager.AppendMessage($"전체 추출 중 오류 발생: {exception.Message}", OutputType.Error);
+            }
         }
 
         public void OnClickExtractScript(object sender, RoutedEventArgs e)
@@ -84,11 +97,20 @@ namespace DataTool
 
             if (!result.IsValid)
             {
-                AppendToOutput(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
+                _outputManager.AppendMessage(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
                 return;
             }
 
-            // Extract script logic here
+            try
+            {
+                _outputManager.AppendMessage("스크립트 추출을 시작합니다...", OutputType.Info);
+                // Extract script logic here
+                _outputManager.AppendMessage("스크립트 추출이 완료되었습니다.", OutputType.Success);
+            }
+            catch (Exception exception)
+            {
+                _outputManager.AppendMessage($"스크립트 추출 중 오류 발생: {exception.Message}", OutputType.Error);
+            }
         }
 
         public void OnClickExtractTable(object sender, RoutedEventArgs e)
@@ -102,11 +124,20 @@ namespace DataTool
 
             if (!result.IsValid)
             {
-                AppendToOutput(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
+                _outputManager.AppendMessage(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
                 return;
             }
 
-            // Extract table logic here
+            try
+            {
+                _outputManager.AppendMessage("테이블 추출을 시작합니다...", OutputType.Info);
+                // Extract table logic here
+                _outputManager.AppendMessage("테이블 추출이 완료되었습니다.", OutputType.Success);
+            }
+            catch (Exception exception)
+            {
+                _outputManager.AppendMessage($"테이블 추출 중 오류 발생: {exception.Message}", OutputType.Error);
+            }
         }
 
         public void OnClickExtractString(object sender, RoutedEventArgs e)
@@ -120,34 +151,20 @@ namespace DataTool
 
             if (!result.IsValid)
             {
-                AppendToOutput(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
+                _outputManager.AppendMessage(result.ErrorMessage ?? "알 수 없는 오류가 발생했습니다.", OutputType.Error);
                 return;
             }
 
-            // Extract string logic here
-        }
-
-        private void AppendToOutput(string message, OutputType type = OutputType.Normal)
-        {
-            Dispatcher.UIThread.Post(() =>
+            try
             {
-                var outputText = this.FindControl<TextBlock>("OutputText")!;
-                var timestamp  = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] ";
-
-                var textRun = new Run
-                {
-                    Text = $"{timestamp}{message}\n",
-                    Foreground = type switch
-                    {
-                        OutputType.Error   => Brushes.Red,
-                        _                  => new SolidColorBrush(Color.Parse("#FFE6E6E6"))
-                    }
-                };
-
-                outputText.Inlines?.Add(textRun);
-                var scrollViewer = this.FindControl<ScrollViewer>("OutputScroller")!;
-                scrollViewer.Offset = new Vector(0, scrollViewer.Extent.Height);
-            });
+                _outputManager.AppendMessage("문자열 추출을 시작합니다...", OutputType.Info);
+                // Extract string logic here
+                _outputManager.AppendMessage("문자열 추출이 완료되었습니다.", OutputType.Success);
+            }
+            catch (Exception exception)
+            {
+                _outputManager.AppendMessage($"문자열 추출 중 오류 발생: {exception.Message}", OutputType.Error);
+            }
         }
     }
 }
