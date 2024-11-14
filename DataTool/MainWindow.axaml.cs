@@ -83,7 +83,7 @@ namespace DataTool
             }
             catch (Exception exception)
             {
-                _outputManager.AppendMessage($"전체 추출 중 오류 발생: {exception.Message}", OutputType.Error);
+                _outputManager.AppendMessage($"{exception.Message}", OutputType.Error);
             }
         }
 
@@ -109,7 +109,7 @@ namespace DataTool
             }
             catch (Exception exception)
             {
-                _outputManager.AppendMessage($"스크립트 추출 중 오류 발생: {exception.Message}", OutputType.Error);
+                _outputManager.AppendMessage($"{exception.Message}", OutputType.Error);
             }
         }
 
@@ -136,7 +136,7 @@ namespace DataTool
             }
             catch (Exception exception)
             {
-                _outputManager.AppendMessage($"테이블 추출 중 오류 발생: {exception.Message}", OutputType.Error);
+                _outputManager.AppendMessage($"{exception.Message}", OutputType.Error);
             }
         }
 
@@ -163,7 +163,7 @@ namespace DataTool
             }
             catch (Exception exception)
             {
-                _outputManager.AppendMessage($"문자열 추출 중 오류 발생: {exception.Message}", OutputType.Error);
+                _outputManager.AppendMessage($"{exception.Message}", OutputType.Error);
             }
         }
     }

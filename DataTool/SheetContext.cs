@@ -4,7 +4,7 @@ using NPOI.SS.UserModel;
 namespace DataTool;
 
 public record SheetContext(
-    string ExcelFileName,
+    string TableName,
     string SheetName,
     ISheet Sheet,
     int RowCount,

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using NPOI.SS.UserModel;
@@ -14,12 +15,14 @@ public class SheetContextCollector
     private readonly        IReadOnlyDictionary<string, string> _typeMap;
     private readonly        List<SheetContext>                  _sheetContexts      = new();
     private static readonly string[]                            SupportedExtensions = { ".xlsx", ".xls" };
-
+    private readonly TableAddress _address;
+    
     public SheetContextCollector(UIControlManager controlManager, OutputManager outputManager)
     {
         _controlManager = controlManager;
         _outputManager  = outputManager;
         _typeMap        = InitializeTypeMap();
+        _address = new TableAddress();
     }
 
     private static IReadOnlyDictionary<string, string> InitializeTypeMap() =>
@@ -39,34 +42,22 @@ public class SheetContextCollector
 
     public void CollectAll()
     {
-        try
-        {
-            var excelFiles = GetExcelFileList();
-            _outputManager.AppendMessage($"총 {excelFiles.Count}개의 엑셀 파일을 찾았습니다.", OutputType.Info);
-
-            ProcessExcelFiles(excelFiles);
-
-            _outputManager.AppendMessage($"총 {_sheetContexts.Count}개의 시트 처리가 완료되었습니다.", OutputType.Success);
-        }
-        catch (Exception ex)
-        {
-            _outputManager.AppendMessage($"데이터 수집 중 오류 발생: {ex.Message}", OutputType.Error);
-            throw;
-        }
+        var excelFiles = GetExcelFileList();
+        ProcessExcelFiles(excelFiles);
     }
 
     private List<string> GetExcelFileList()
     {
         var tablePath = _controlManager.GetTextBoxValue(TextBoxId.TablePath);
-        _outputManager.AppendMessage($"경로 검색 중: {tablePath}", OutputType.Info);
-
         var excelFiles = Directory.GetFiles(tablePath, "*.*", SearchOption.AllDirectories)
             .Where(IsExcelFile)
             .OrderBy(file => file)
             .ToList();
 
-        ValidateExcelFiles(excelFiles, tablePath);
-        return excelFiles;
+        if (excelFiles.Count != 0) return excelFiles;
+        
+        var message = $"지정된 디렉토리에서 엑셀 파일을 찾을 수 없습니다: {tablePath}";
+        throw new FileNotFoundException(message);
     }
 
     private static bool IsExcelFile(string filePath)
@@ -75,35 +66,17 @@ public class SheetContextCollector
         return SupportedExtensions.Contains(extension);
     }
 
-    private void ValidateExcelFiles(IReadOnlyCollection<string> files, string searchPath)
-    {
-        if (!files.Any())
-        {
-            var message = $"지정된 디렉토리에서 엑셀 파일을 찾을 수 없습니다: {searchPath}";
-            _outputManager.AppendMessage(message, OutputType.Error);
-            throw new FileNotFoundException(message);
-        }
-    }
-
     private void ProcessExcelFiles(IEnumerable<string> files)
     {
         _sheetContexts.Clear();
         foreach (var file in files)
         {
-            try
-            {
-                if (IsSpecialSheet(Path.GetFileNameWithoutExtension(file)))
-                    continue;
+            if (IsSpecialSheet(Path.GetFileNameWithoutExtension(file)))
+                continue;
 
-                var contexts = ProcessExcelFile(file);
-                _sheetContexts.AddRange(contexts);
-            }
-            catch (Exception ex)
-            {
-                _outputManager.AppendMessage($"파일 처리 중 오류 발생 ({Path.GetFileName(file)}): {ex.Message}",
-                    OutputType.Error);
-                throw;
-            }
+            _address.TableName = Path.GetFileNameWithoutExtension(file);
+            var contexts = ProcessExcelFile(file);
+            _sheetContexts.AddRange(contexts);
         }
     }
 
@@ -116,9 +89,8 @@ public class SheetContextCollector
     private List<SheetContext> ProcessExcelFile(string filePath)
     {
         var sheetNames = new HashSet<string>();
-        var fileName   = Path.GetFileName(filePath);
-        _outputManager.AppendMessage($"파일 처리 중: {fileName}", OutputType.Info);
-
+        
+        
         using var fs       = new FileStream(filePath, FileMode.Open, FileAccess.Read);
         var       workbook = new XSSFWorkbook(fs);
         var       contexts = new List<SheetContext>();
@@ -126,31 +98,23 @@ public class SheetContextCollector
         for (var i = 0; i < workbook.NumberOfSheets; i++)
         {
             var sheet        = workbook.GetSheetAt(i);
-            var sheetContext = GetSheetContext(sheet, filePath);
-
+            _address.SheetName = sheet.SheetName;
+            
+            var sheetContext = GetSheetContext(sheet);
             if (!sheetNames.Add(sheetContext.SheetName))
-            {
-                var message = $"중복된 시트 이름이 발견되었습니다: '{sheetContext.SheetName}'. 파일: {fileName}";
-                _outputManager.AppendMessage(message, OutputType.Error);
-                throw new Exception(message);
-            }
-
+                _address.ThrowException("중복된 시트 이름이 발견되었습니다");
+            
             contexts.Add(sheetContext);
         }
 
         return contexts;
     }
 
-    private SheetContext GetSheetContext(ISheet sheet, string filePath)
+    private SheetContext GetSheetContext(ISheet sheet)
     {
         var sheetName = GetSheetName(sheet);
-        _outputManager.AppendMessage($"\n{new string('=', 60)}", OutputType.Info);
-        _outputManager.AppendMessage($"시트 분석 중: {Path.GetFileName(filePath)} : {sheetName}", OutputType.Info);
-        _outputManager.AppendMessage(new string('=', 60), OutputType.Info);
-
         var (rowCount, columnCount) = GetTableDimensions(sheet);
-        _outputManager.AppendMessage($"테이블 크기: {rowCount}행 x {columnCount}열", OutputType.Info);
-
+        _outputManager.AppendMessage($"{sheetName} 테이블 크기: {rowCount}행 x {columnCount}열", OutputType.Info);
         var propertyNames        = ExtractPropertyNames(sheet, columnCount);
         var propertyTypes        = ExtractPropertyTypes(sheet, columnCount);
         var propertyDescriptions = ExtractPropertyDescriptions(sheet, columnCount);
@@ -162,7 +126,7 @@ public class SheetContextCollector
         PrintKeyInfo(primaryKeyIndex, foreignKeys, propertyNames, propertyTypes);
 
         return new SheetContext(
-            filePath,
+            _address.TableName!,
             sheetName,
             sheet,
             rowCount,
@@ -179,57 +143,32 @@ public class SheetContextCollector
     {
         var nameCell = sheet.GetRow(0)?.GetCell(1);
         if (nameCell?.CellType != CellType.String)
-        {
-            var message = $"시트 이름 셀이 비어있거나 문자열이 아닙니다. 시트: {sheet.SheetName}";
-            _outputManager.AppendMessage(message, OutputType.Error);
-            throw new Exception(message);
-        }
-
-        return nameCell.StringCellValue;
+            _address.ThrowException("시트 이름 셀이 비어있거나 문자열이 아닙니다");
+        return nameCell!.StringCellValue;
     }
 
     private (int rowCount, int columnCount) GetTableDimensions(ISheet sheet)
     {
         var firstRow = sheet.GetRow(0);
         if (firstRow == null)
-        {
-            var message = "첫 번째 행을 찾을 수 없습니다.";
-            _outputManager.AppendMessage(message, OutputType.Error);
-            throw new Exception(message);
-        }
+            _address.ThrowException("첫 번째 행을 찾을 수 없습니다.");
 
-        var firstMarker = -1;
-        var lastMarker  = -1;
-
+        var (firstMarker, lastMarker) = (-1, -1);
         for (int j = 0; j < firstRow.LastCellNum; j++)
         {
-            var cell = firstRow.GetCell(j);
-            if (cell?.StringCellValue?.Contains("@") == true)
-            {
-                if (firstMarker == -1) firstMarker = j;
-                lastMarker = j;
-            }
+            if (firstRow.GetCell(j)?.StringCellValue?.Contains("@") != true) continue;
+            if (firstMarker == -1) firstMarker = j;
+            lastMarker = j;
         }
 
-        if (firstMarker == -1 || lastMarker == -1)
-        {
-            var message = "테이블 범위 마커(@)를 찾을 수 없습니다.";
-            _outputManager.AppendMessage(message, OutputType.Error);
-            throw new Exception(message);
-        }
+        if (firstMarker == -1)
+            _address.ThrowException("테이블 범위 마커(@)를 찾을 수 없습니다.");
 
-        var columnCount = lastMarker - firstMarker - 1;
-        var rowCount    = 4;
-
-        while (true)
-        {
-            var row = sheet.GetRow(rowCount);
-            if (row?.GetCell(firstMarker)?.StringCellValue?.Contains("@") != true)
-                break;
+        var rowCount = 4;
+        while (sheet.GetRow(rowCount)?.GetCell(firstMarker)?.StringCellValue?.Contains("@") == true)
             rowCount++;
-        }
 
-        return (rowCount - 4 - 1, columnCount);
+        return (rowCount - 4 - 1, lastMarker - firstMarker - 1);
     }
 
     private List<string> ExtractPropertyNames(ISheet sheet, int columnCount)
@@ -241,19 +180,17 @@ public class SheetContextCollector
         {
             var cell = propertyRow.GetCell(i);
             if (cell?.CellType != CellType.String)
-            {
-                var message = $"속성 이름은 문자열이어야 합니다. 열: {i}";
-                _outputManager.AppendMessage(message, OutputType.Error);
-                throw new Exception(message);
-            }
+                _address.ThrowException("속성 이름은 문자열이어야 합니다. 열: " + i);
 
             var propertyName = cell.StringCellValue;
             if (propertyName.Contains(" "))
-            {
-                var message = $"속성 이름에 공백이 포함되어 있습니다: {propertyName}";
-                _outputManager.AppendMessage(message, OutputType.Error);
-                throw new Exception(message);
-            }
+                _address.ThrowException("속성 이름에 공백이 포함되어 있습니다: " + propertyName);
+            
+            if (string.IsNullOrWhiteSpace(propertyName))
+                _address.ThrowException("속성 이름이 비어있습니다.");
+            
+            if (_address.SheetName == propertyName)
+                _address.ThrowException("속성 이름이 시트 이름과 동일합니다: " + propertyName);
 
             propertyNames.Add(propertyName);
         }
