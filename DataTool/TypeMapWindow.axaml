@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DataTool.TypeMapWindow"
+        Title="타입 매핑 설정"
+        Width="400"
+        Height="450"
+        WindowStartupLocation="CenterOwner"
+        Background="#FF252526">
+
+    <Grid Margin="20" RowDefinitions="*,Auto">
+        <!-- 매핑 항목들을 위한 영역 -->
+        <Border Grid.Row="0" 
+                Background="#FF2D2D30"
+                CornerRadius="8"
+                Padding="20"
+                Margin="0,0,0,20">
+            <Grid Name="TypeMapGrid"/>
+        </Border>
+
+        <!-- 버튼 영역 -->
+        <StackPanel Grid.Row="1" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right"
+                    Spacing="10">
+            <Button Content="저장" 
+                    Click="OnSave"
+                    Background="#FF0E639C"
+                    Foreground="White"
+                    Padding="15,8"
+                    Width="80"
+                    Height="35"
+                    CornerRadius="4"/>
+            <Button Content="취소" 
+                    Click="OnCancel"
+                    Background="#FF6E40C9"
+                    Foreground="White"
+                    Padding="15,8"
+                    Width="80"
+                    Height="35"
+                    CornerRadius="4"/>
+        </StackPanel>
+    </Grid>
+</Window>

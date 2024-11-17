@@ -1,0 +1,10 @@
+{
+  "int": "l4",
+  "bool": "bool",
+  "long": "l8",
+  "float": "f4",
+  "double": "f8",
+  "string": "str",
+  "datetime": "datetime",
+  "timespan": "timespan"
+}

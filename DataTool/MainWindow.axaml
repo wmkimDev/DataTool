@@ -2,12 +2,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="https://github.com/avaloniaui"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="DataTool.MainWindow"
         Title="데이터 도구"
         TransparencyLevelHint="AcrylicBlur"
         Background="#FF1E1E1E"
-        Width="900"   
+        Width="800"   
         Height="950"
         CanResize="False"
         WindowStartupLocation="CenterScreen">
@@ -158,19 +159,27 @@
                     </Grid>
                 </StackPanel>
             </Border>
-
+            
             <!-- Action Buttons -->
             <Border Grid.Row="1" 
                     Background="#FF2D2D30" 
-                    CornerRadius="8" 
-                    Padding="20" 
+                    CornerRadius="10" 
+                    Padding="10" 
                     Margin="0,0,0,15">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-                    <Button Classes="save" Width="150" Click="OnClickSaveSettings" Content="설정 저장"/>
-                    <Button Classes="execute" Width="150" Click="OnClickExecuteAll" Content="전부 추출"/>
-                    <Button Classes="extract" Width="150" Click="OnClickExtractScript" Content="스크립트 추출"/>
-                    <Button Classes="extract" Width="150" Click="OnClickExtractTable" Content="테이블 추출"/>
-                    <Button Classes="extract" Width="150" Click="OnClickExtractString" Content="스트링 추출"/>
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Spacing="10">
+                    <!-- 첫 번째 줄 -->
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Classes="save" Width="150" Click="OnClickSaveSettings" Content="경로 저장"/>
+                        <Button Classes="save" Width="150" Click="OnClickTypeMap" Content="타입 설정"/>
+                    </StackPanel>
+        
+                    <!-- 두 번째 줄 -->
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Classes="execute" Width="150" Click="OnClickExecuteAll" Content="전부 추출"/>
+                        <Button Classes="extract" Width="150" Click="OnClickExtractScript" Content="스크립트 추출"/>
+                        <Button Classes="extract" Width="150" Click="OnClickExtractTable" Content="테이블 추출"/>
+                        <Button Classes="extract" Width="150" Click="OnClickExtractString" Content="스트링 추출"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

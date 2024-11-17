@@ -24,3 +24,6 @@ build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
 [C:/Users/user/Desktop/Git/Others/DataTool/DataTool/MainWindow.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/user/Desktop/Git/Others/DataTool/DataTool/TypeMapWindow.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml

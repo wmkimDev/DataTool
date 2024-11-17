@@ -3,7 +3,9 @@
   <component name="AvaloniaProject">
     <option name="projectPerEditor">
       <map>
+        <entry key="App.axaml" value="DataTool.csproj" />
         <entry key="MainWindow.axaml" value="DataTool.csproj" />
+        <entry key="TypeMapWindow.axaml" value="DataTool.csproj" />
       </map>
     </option>
   </component>

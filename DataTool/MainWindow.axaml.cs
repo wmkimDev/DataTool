@@ -1,10 +1,6 @@
 using System;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Documents;
 using Avalonia.Interactivity;
-using Avalonia.Media;
-using Avalonia.Threading;
 
 namespace DataTool
 {
@@ -165,6 +161,12 @@ namespace DataTool
             {
                 _outputManager.AppendMessage($"{exception.Message}", OutputType.Error);
             }
+        }
+        
+        public void OnClickTypeMap(object sender, RoutedEventArgs e)
+        {
+            var typeMapWindow = new TypeMapWindow();
+            typeMapWindow.ShowDialog(this);
         }
     }
 }
